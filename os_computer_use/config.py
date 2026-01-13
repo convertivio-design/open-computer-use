@@ -1,8 +1,10 @@
 # Define the models to use in the agent
 
 from os_computer_use import providers
+from os_computer_use.dummy_provider import DummyProvider
 
-grounding_model = providers.OSAtlasProvider()
+grounding_model = DummyProvider()
+# grounding_model = providers.OSAtlasProvider()
 # grounding_model = providers.ShowUIProvider()
 
 # vision_model = providers.FireworksProvider("llama-3.2")
