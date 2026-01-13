@@ -40,7 +40,22 @@ class LLMProvider:
     def __init__(self, model):
         self.model = self.aliases.get(model, model)
         print(f"Using {self.__class__.__name__} with {self.model}")
-        self.client = self.create_client()
+        # Avoid initializing API clients at import-time/startup so the app can boot
+        # and display helpful config errors without crashing immediately.
+        self._client = None
+
+    def _get_client(self):
+        if self._client is not None:
+            return self._client
+
+        try:
+            self._client = self.create_client()
+            return self._client
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to initialize {self.__class__.__name__} client. "
+                "Check that the required API key environment variable is set for this provider."
+            ) from e
 
     # Convert our function schema to the provider's required format
     def create_function_schema(self, definitions):
@@ -86,12 +101,13 @@ class LLMProvider:
 
     # Create a chat completion using the API client
     def completion(self, messages, **kwargs):
+        client = self._get_client()
         # Skip the tools parameter if it's None
         filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         # Wrap content blocks in image or text objects if necessary
         new_messages = [self.transform_message(message) for message in messages]
         # Call the inference provider
-        completion = self.client.create(
+        completion = client.create(
             messages=new_messages, model=self.model, **filtered_kwargs
         )
         # Check for errors in the response
