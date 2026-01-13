@@ -18,10 +18,27 @@ class OSAtlasProvider:
     """
 
     def __init__(self):
-        self.client = Client(OSATLAS_HUGGINGFACE_SOURCE, hf_token=HF_TOKEN)
+        # IMPORTANT: Avoid network calls at import-time so the app can start even if
+        # the Hugging Face space is temporarily down. We'll initialize lazily.
+        self._client = None
+
+    def _get_client(self) -> Client:
+        if self._client is not None:
+            return self._client
+
+        try:
+            self._client = Client(OSATLAS_HUGGINGFACE_SOURCE, hf_token=HF_TOKEN)
+            return self._client
+        except Exception as e:
+            raise RuntimeError(
+                "Failed to initialize OS-Atlas (Hugging Face space). "
+                "The space may be down or rate-limited. "
+                "Try again later, set HF_TOKEN, or switch `grounding_model` in `os_computer_use/config.py`."
+            ) from e
 
     def call(self, prompt, image_data):
-        result = self.client.predict(
+        client = self._get_client()
+        result = client.predict(
             image=handle_file(image_data),
             text_input=prompt + "\nReturn the response in the form of a bbox",
             model_id=OSATLAS_HUGGINGFACE_MODEL,
