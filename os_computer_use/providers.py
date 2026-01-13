@@ -87,3 +87,22 @@ class MoonshotProvider(OpenAIBaseProvider):
         "moonshot-v1": "moonshot-v1-128k",
         "moonshot-v1-vision": "moonshot-v1-128k-vision-preview",
     }
+
+class DummyLLMProvider:
+    def __init__(self, error_message="Provider unavailable"):
+        self.error_message = error_message
+
+    def call(self, messages, functions=None):
+        print(f"DummyLLMProvider called: {self.error_message}")
+        if functions:
+            return f"Error: {self.error_message}", []
+        else:
+            return f"Error: {self.error_message}"
+
+class DummyGroundingProvider:
+    def __init__(self, error_message="Provider unavailable"):
+        self.error_message = error_message
+        
+    def call(self, *args, **kwargs):
+        print(f"DummyGroundingProvider called: {self.error_message}")
+        return (0, 0)

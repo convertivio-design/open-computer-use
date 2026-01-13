@@ -1,21 +1,39 @@
 # Define the models to use in the agent
 
 from os_computer_use import providers
+import os
 
-grounding_model = providers.OSAtlasProvider()
-# grounding_model = providers.ShowUIProvider()
+# Grounding Model
+try:
+    # Try OSAtlas first
+    grounding_model = providers.OSAtlasProvider()
+except Exception as e:
+    print(f"Warning: Failed to initialize OSAtlasProvider: {e}")
+    try:
+        # Fallback to ShowUI
+        grounding_model = providers.ShowUIProvider()
+    except Exception as e:
+        print(f"Warning: Failed to initialize ShowUIProvider: {e}")
+        grounding_model = providers.DummyGroundingProvider("Grounding models failed to initialize")
 
-# vision_model = providers.FireworksProvider("llama-3.2")
-# vision_model = providers.OpenAIProvider("gpt-4o")
-# vision_model = providers.AnthropicProvider("claude-3.5-sonnet")
-# vision_model = providers.MoonshotProvider("moonshot-v1-vision")
-# vision_model = providers.MistralProvider("pixtral")
-#vision_model = providers.GroqProvider("llama-3.2")
-vision_model = providers.OpenRouterProvider("qwen-2.5-vl")
+# Vision Model
+if os.getenv("OPENROUTER_API_KEY"):
+    try:
+        vision_model = providers.OpenRouterProvider("qwen-2.5-vl")
+    except Exception as e:
+        print(f"Warning: Failed to initialize OpenRouterProvider: {e}")
+        vision_model = providers.DummyLLMProvider("OpenRouterProvider failed")
+else:
+    print("Warning: Missing OPENROUTER_API_KEY. Using DummyLLMProvider for vision_model.")
+    vision_model = providers.DummyLLMProvider("Missing OPENROUTER_API_KEY")
 
-# action_model = providers.FireworksProvider("llama-3.3")
-# action_model = providers.OpenAIProvider("gpt-4o")
-# action_model = providers.AnthropicProvider("claude-3.5-sonnet")
-# vision_model = providers.MoonshotProvider("moonshot-v1-vision")
-# action_model = providers.MistralProvider("mistral")
-action_model = providers.GroqProvider("llama-3.3")
+# Action Model
+if os.getenv("GROQ_API_KEY"):
+    try:
+        action_model = providers.GroqProvider("llama-3.3")
+    except Exception as e:
+        print(f"Warning: Failed to initialize GroqProvider: {e}")
+        action_model = providers.DummyLLMProvider("GroqProvider failed")
+else:
+    print("Warning: Missing GROQ_API_KEY. Using DummyLLMProvider for action_model.")
+    action_model = providers.DummyLLMProvider("Missing GROQ_API_KEY")
