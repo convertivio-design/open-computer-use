@@ -13,13 +13,30 @@ class ShowUIProvider:
     """
 
     def __init__(self):
-        self.client = Client(SHOWUI_HUGGINGFACE_SOURCE)
+        # IMPORTANT: Avoid network calls at import-time so the app can start even if
+        # the Hugging Face space is temporarily down. We'll initialize lazily.
+        self._client = None
+
+    def _get_client(self) -> Client:
+        if self._client is not None:
+            return self._client
+
+        try:
+            self._client = Client(SHOWUI_HUGGINGFACE_SOURCE)
+            return self._client
+        except Exception as e:
+            raise RuntimeError(
+                "Failed to initialize ShowUI (Hugging Face space). "
+                "The space may be down or rate-limited. "
+                "Try again later or switch `grounding_model` in `os_computer_use/config.py`."
+            ) from e
 
     def extract_norm_point(self, response, image_url):
         if isinstance(image_url, str):
             image = Image.open(image_url)
         else:
-            image = Image.fromarray(np.uint8(image_url))
+            # Best-effort conversion without requiring numpy as a dependency.
+            image = Image.fromarray(image_url)
         
         point = ast.literal_eval(response)
         if len(point) == 2:
@@ -29,7 +46,8 @@ class ShowUIProvider:
             return None
 
     def call(self, prompt, image_data):
-        result = self.client.predict(
+        client = self._get_client()
+        result = client.predict(
             image=handle_file(image_data),
             query=prompt,
             iterations=1,

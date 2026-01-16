@@ -14,7 +14,9 @@ logger = Logger()
 load_dotenv()
 
 # Configure E2B
-os.environ["E2B_API_KEY"] = os.getenv("E2B_API_KEY")
+_e2b_api_key = os.getenv("E2B_API_KEY")
+if _e2b_api_key:
+    os.environ["E2B_API_KEY"] = _e2b_api_key
 
 
 async def start(user_input=None, output_dir=None):

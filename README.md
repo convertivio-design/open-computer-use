@@ -85,7 +85,7 @@ Enter the project directory:
 cd open-computer-use
 ```
 
-Create a `.env` file in `open-computer-use` and set the following:
+Create a `.env` file in `open-computer-use` (recommended: copy `.env.example` to `.env`) and set the following:
 
 ```sh
 # Get your API key here: https://e2b.dev/
